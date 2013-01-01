@@ -1,8 +1,6 @@
 #!/usr/bin/php
 <?php
   function fetchRecentTracks($userName) {
-
-
     $url = "http://ws.audioscrobbler.com/1.0/user/" . $userName . "/recenttracks.rss";
     $ch = curl_init($url);
     $options = array(
@@ -26,11 +24,10 @@
       $date = (string) $song->pubDate;
       $str = "[" . formatDate($date) . "] " . $title . "\n";
       //$str = $title . " [" . formatDate($date) . "]" . "\n";
-
       $recentTracksArray[] = $str;
     }
-    
-    return $recentTracksArray; 
+
+    return $recentTracksArray;
   }
 
   function formatDate($date) {
@@ -47,7 +44,7 @@
       $userName = "RnRG";
     }
     else {
-      $userName = $argv[1];  
+      $userName = $argv[1];
     }
 
     return $userName;
