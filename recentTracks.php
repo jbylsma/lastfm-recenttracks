@@ -69,4 +69,5 @@ foreach ($userNames as $userName) {
   foreach ($recentTracksArray as $track) {
     echo($track);
   }
+  echo "\n";
 }
