@@ -1,7 +1,24 @@
 <?php
 
+/**
+ * @file
+ * Print recent tracks from Last.fm users.
+ *
+ * Can be used with GeekTool (http://projects.tynsoe.org/en/geektool/) to
+ * display recent scrobbles on OS X desktops.
+ */
+
+/**
+ * Fetch a user's recent tracks using cURL.
+ *
+ * @param $username
+ *   The Last.fm username.
+ *
+ * @return
+ *   The cURL response, if cURL succeeds. FALSE, if cURL fails.
+ */
 function fetchRecentTracks($userName) {
-  $url = "http://ws.audioscrobbler.com/1.0/user/" . $userName . "/recenttracks.rss";
+  $url = sprintf('http://ws.audioscrobbler.com/1.0/user/%s/recenttracks.rss', $userName);
   $ch = curl_init($url);
   $options = array(
     CURLOPT_RETURNTRANSFER  => true,
@@ -9,12 +26,22 @@ function fetchRecentTracks($userName) {
   );
   curl_setopt_array($ch, $options);
 
-  $rss = curl_exec($ch);
+  $result = curl_exec($ch);
   curl_close($ch);
 
-  return $rss;
+  return $result;
 }
 
+/**
+ * Parse Last.FM RSS feed.
+ *
+ * @param $rss
+ *   RSS feed of a user's recent tracks.
+ *
+ * @return array
+ *   Returns an array containing rendered date and title strings of a user's
+ *   recent tracks.
+ */
 function parseRecentTracksXml($rss) {
   $recentTracksArray = array();
   libxml_clear_errors();
@@ -30,21 +57,30 @@ function parseRecentTracksXml($rss) {
   foreach($data->item as $song) {
     $title = (string) $song->title;
     $date = (string) $song->pubDate;
-    $str = sprintf("[%s] %s\n", formatDate($date), $title);
-    $recentTracksArray[] = $str;
+    $recentTracksArray[] = sprintf("[%s] %s\n", formatDate($date), $title);
   }
 
   return $recentTracksArray;
 }
 
+/**
+ * Formats a date for display.
+ *
+ * @param $date
+ *   English textual datetime capable of being parsed by strtotime().
+ *
+ * @return string
+ *   The rendered date.
+ */
 function formatDate($date) {
-  $formattedDate = "";
   $phpDate = strtotime($date);
   $formattedDate = strftime("%Y-%m-%d %H:%M", $phpDate);
   return $formattedDate;
 }
 
-// Main
+/**
+ * Main
+ */
 // Require at least one username
 if ($argc < 2) {
   print 'At least one username is required.' . "\n";
@@ -61,13 +97,13 @@ foreach ($userNames as $userName) {
   $recentTracksArray = parseRecentTracksXml($rss);
 
   if (!$recentTracksArray) {
-    echo("Error with $userName\n");
+    print "Error fetching $userName\n";
     continue;
   }
 
-  echo($userName . "::recent\n");
+  print $userName . "::recent\n";
   foreach ($recentTracksArray as $track) {
-    echo($track);
+    print $track;
   }
-  echo "\n";
+  print "\n";
 }
