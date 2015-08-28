@@ -9,6 +9,50 @@
  * display recent scrobbles on OS X desktops.
  */
 
+define('API_KEY_FILE', '.apikey');
+define('TRACK_LIMIT', 10);
+
+// Check for API Key
+if (!file_exists('./' . API_KEY_FILE)) {
+  print API_KEY_FILE . ' required.' . "\n";
+  exit(1);
+}
+
+$key = file(API_KEY_FILE);
+if (!$key) {
+  print 'Could not load ' . API_KEY_FILE . '.' . "\n";
+  exit(1);
+}
+
+define('API_KEY', trim($key[0]));
+
+// Require at least one username
+if ($argc < 2) {
+  print 'At least one username is required.' . "\n";
+  exit(1);
+}
+
+array_shift($argv);
+$userNames = $argv;
+
+libxml_use_internal_errors(true);
+
+foreach ($userNames as $userName) {
+  $rss = fetchRecentTracks($userName);
+  $recentTracksArray = parseRecentTracksXml($rss);
+
+  if (!$recentTracksArray) {
+    print "Error fetching $userName\n";
+    continue;
+  }
+
+  print $userName . "::recent\n";
+  foreach ($recentTracksArray as $track) {
+    print $track;
+  }
+  print "\n";
+}
+
 /**
  * Fetch a user's recent tracks using cURL.
  *
@@ -19,7 +63,8 @@
  *   The cURL response, if cURL succeeds. FALSE, if cURL fails.
  */
 function fetchRecentTracks($userName) {
-  $url = sprintf('http://ws.audioscrobbler.com/1.0/user/%s/recenttracks.rss', $userName);
+  $limit = 10;
+  $url = sprintf('http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=%s&api_key=%s&limit=%s', $userName, API_KEY, TRACK_LIMIT);
   $ch = curl_init($url);
   $options = array(
     CURLOPT_RETURNTRANSFER  => true,
@@ -53,12 +98,10 @@ function parseRecentTracksXml($rss) {
     return false;
   }
 
-  $data = $xml->channel;
+  $data = $xml->recenttracks;
 
-  foreach($data->item as $song) {
-    $title = (string) $song->title;
-    $date = (string) $song->pubDate;
-    $recentTracksArray[] = sprintf("[%s] %s\n", formatDate($date), $title);
+  foreach($data->track as $track) {
+    $recentTracksArray[] = sprintf("[%s] %s - %s\n", formatDate($track->date), $track->artist, $track->name);
   }
 
   return $recentTracksArray;
@@ -77,34 +120,4 @@ function formatDate($date) {
   $phpDate = strtotime($date);
   $formattedDate = strftime("%Y-%m-%d %H:%M", $phpDate);
   return $formattedDate;
-}
-
-/**
- * Main
- */
-// Require at least one username
-if ($argc < 2) {
-  print 'At least one username is required.' . "\n";
-  exit(1);
-}
-
-array_shift($argv);
-$userNames = $argv;
-
-libxml_use_internal_errors(true);
-
-foreach ($userNames as $userName) {
-  $rss = fetchRecentTracks($userName);
-  $recentTracksArray = parseRecentTracksXml($rss);
-
-  if (!$recentTracksArray) {
-    print "Error fetching $userName\n";
-    continue;
-  }
-
-  print $userName . "::recent\n";
-  foreach ($recentTracksArray as $track) {
-    print $track;
-  }
-  print "\n";
 }
