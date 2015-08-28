@@ -13,12 +13,12 @@ define('API_KEY_FILE', '.apikey');
 define('TRACK_LIMIT', 10);
 
 // Check for API Key
-if (!file_exists('./' . API_KEY_FILE)) {
+if (!file_exists(__DIR__ . '/' . API_KEY_FILE)) {
   print API_KEY_FILE . ' required.' . "\n";
   exit(1);
 }
 
-$key = file(API_KEY_FILE);
+$key = file(__DIR__ . '/' . API_KEY_FILE);
 if (!$key) {
   print 'Could not load ' . API_KEY_FILE . '.' . "\n";
   exit(1);
