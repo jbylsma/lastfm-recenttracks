@@ -117,7 +117,7 @@ function parseRecentTracksXml($rss) {
  *   The rendered date.
  */
 function formatDate($date) {
-  $phpDate = strtotime($date);
+  $phpDate = strtotime($date . "UTC");
   $formattedDate = strftime("%Y-%m-%d %H:%M", $phpDate);
   return $formattedDate;
 }
