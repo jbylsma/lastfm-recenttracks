@@ -104,11 +104,38 @@ function parseRecentTracksXml($rss) {
 
   $data = $xml->recenttracks;
 
-  foreach($data->track as $track) {
-    $recentTracksArray[] = sprintf("[%s] %s - %s\n", formatDate($track->date), $track->artist, $track->name);
+  foreach($data->track as $track) { 
+
+    // if the song is "now playing" per last.fm, then it doesn't have a date property
+    $nowPlaying = checkForNowPlaying($track);
+    if ($nowPlaying) {
+      $nowPlayingDisplay = mb_convert_encoding('&#x266B;', 'UTF-8', 'HTML-ENTITIES');
+      $recentTracksArray[] = sprintf("[%s] %s - %s %s\n", formatDate($track->date), $track->artist, $track->name, $nowPlayingDisplay);
+    }
+    else {
+      $recentTracksArray[] = sprintf("[%s] %s - %s\n", formatDate($track->date), $track->artist, $track->name);
+    }
   }
 
   return $recentTracksArray;
+}
+
+/**
+ * Checks to see if the track is currently playing
+ * @param $track
+ *   array containing last.fm data about the track
+ *
+ * @return boolean
+ *   "true" if the track is "now playing"; false otherwise
+ */
+function checkForNowPlaying($track) {
+  if ($track->attributes() != null) {
+    $attributes = $track->attributes();
+    if ($attributes->nowplaying != null) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -120,8 +147,17 @@ function parseRecentTracksXml($rss) {
  * @return string
  *   The rendered date.
  */
-function formatDate($date) {
-  $phpDate = strtotime($date . "UTC");
+function formatDate($date) { 
+  // if a date was supplied, convert it for display
+  if ($date != '') {
+    $phpDate = strtotime($date . "UTC");
+  }
+  // otherwise, just use right now, because it's probably "now playing"
+  else {
+    $now = date("d M Y, H:m:s");
+    $phpDate = strtotime($now);
+  }
+
   $formattedDate = strftime("%Y-%m-%d %H:%M", $phpDate);
   return $formattedDate;
 }
