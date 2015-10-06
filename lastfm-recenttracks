@@ -98,6 +98,10 @@ function parseRecentTracksXml($rss) {
     return false;
   }
 
+  if ((string) $xml->attributes()->status !== 'ok') {
+    return false;
+  }
+
   $data = $xml->recenttracks;
 
   foreach($data->track as $track) {
