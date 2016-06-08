@@ -39,6 +39,11 @@ libxml_use_internal_errors(true);
 
 foreach ($userNames as $userName) {
   $rss = fetchRecentTracks($userName);
+  if (!$rss) {
+    print "Error fetching $userName\n";
+    continue;
+  }
+
   $recentTracksArray = parseRecentTracksXml($rss);
 
   if (!$recentTracksArray) {
